@@ -54,8 +54,8 @@ if args.command == 'post':
     if args.d: d = args.d
     if args.f: # or just f = args.f
         try:
-            with open(args.d, 'rb') as f:
-                f={args.d: f}
+            with open(args.d, 'rb') as file:
+                f={args.d: file}
         except:
             print("File could not be opened")
             exit()
