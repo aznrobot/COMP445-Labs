@@ -29,7 +29,13 @@ if args.command == 'get':
     v = False
     h = None
     if args.v: v = True
-    if args.h: h = args.h
+    if args.h: # or just h = args.h
+        try:
+            temp = args.h.split(":")
+            h = {temp[0],temp[1]}
+        except:
+            print("Not in \'key:value\' format")
+            exit()
     print("get(%s,%s,%s)" % (v, h, args.url))
 
 if args.command == 'post':
