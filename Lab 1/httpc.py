@@ -1,4 +1,5 @@
 import argparse
+from httpl import GET, POST
 
 parser = argparse.ArgumentParser(
 description='httpc is our take on a curl-like application restricted to the HTTP protocol.',
@@ -37,6 +38,7 @@ if args.command == 'get':
             print("Not in \'key:value\' format")
             exit()
     print("get(%s,%s,%s)" % (v, h, args.url))
+    GET(v, h, args.url)
 
 if args.command == 'post':
     v = False
@@ -60,6 +62,7 @@ if args.command == 'post':
             print("File could not be opened")
             exit()
     print("post(%s,%s,%s,%s,%s)" % (v, h, d, f, args.url))
+    POST(v, h, d, f, args.url)
 
 if args.command == 'help':
     if args.get:
