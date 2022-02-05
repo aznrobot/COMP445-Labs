@@ -38,10 +38,22 @@ if args.command == 'post':
     d = None
     f = None
     if args.v: v = True
-    if args.h: h = args.h
+    if args.h:
+        try:
+            temp = args.h.split(":")
+            dict = {temp[0],temp[1]}
+        except:
+            print("Not in \'key:value\' format")
+            exit()
     if args.d: d = args.d
-    if args.f: d = args.f
-    print("post(%s,%s,%s,%s,%s)" % (v, h, d, f, args.url))
+    if args.f:
+        try:
+            with open(args.d, 'rb') as f:
+                files={args.d: f}
+        except:
+            print("File could not be opened")
+            exit()
+    print("post(%s,%s,%s,%s,%s)" % (v, dict, files, f, args.url))
 
 if args.command == 'help':
     if args.get:
