@@ -1,0 +1,4 @@
+1. Client or server, which implements most of the methods.
+	
+2. Parser alternative
+3. Links to resources that were shown before
