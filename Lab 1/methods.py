@@ -20,6 +20,7 @@ def get(v, h, url):
             request += key + "=" + value
             if amperCounter < 0:
                 request += "&"
+                amperCounter -= 1
 
     if v:
         request += " HTTP/1.1\nhost: "
@@ -43,7 +44,8 @@ def get(v, h, url):
     print(http_response)
 
 # print(get(True,None,"http://httpbin.org/get?course=networking&assignment=1")) # testing v
-# print(get(True,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h
+# print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h
+print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h and v
 
 def post(v, h, d, f, url):
     pass
