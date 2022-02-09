@@ -1,4 +1,5 @@
 import argparse
+import methods
 
 parser = argparse.ArgumentParser(
 description='httpc is our take on a curl-like application restricted to the HTTP protocol.',
@@ -9,11 +10,11 @@ post = subparser.add_parser('post',add_help=False, help='Post executes a HTTP PO
 help = subparser.add_parser('help',add_help=False)
 
 get.add_argument('-v', action='store_true', help= 'Prints the detail of the response such as protocol, status, and headers.')
-get.add_argument('-h', type=str,help= 'Associates headers to HTTP Request with the format \'key:value\'')
+get.add_argument('-h', action='append', type=str,help= 'Associates headers to HTTP Request with the format \'key:value\'')
 get.add_argument('url', type=str,help= 'hostname')
 
 post.add_argument('-v', action='store_true',help= 'Prints the detail of the response such as protocol, status, and headers.')
-post.add_argument('-h', type=str,help= 'Associates headers to HTTP Request with the format \'key:value\'')
+post.add_argument('-h', action='append', type=str,help= 'Associates headers to HTTP Request with the format \'key:value\'')
 notBoth = post.add_mutually_exclusive_group()
 notBoth.add_argument('-d', type=str, help= 'Associates an inline data to the body HTTP POST request.')
 notBoth.add_argument('-f', type=str, help= 'Associates the content of a file to the body HTTP POST')
@@ -31,12 +32,15 @@ if args.command == 'get':
     if args.v: v = True
     if args.h: # or just h = args.h
         try:
-            temp = args.h.split(":")
-            h = {temp[0],temp[1]}
+            h = {}
+            for pair in args.h:
+                first, second = pair.split(":")
+                h[first] = second
         except:
             print("Not in \'key:value\' format")
             exit()
     print("get(%s,%s,%s)" % (v, h, args.url))
+    methods.get(v,h,args.url)
 
 if args.command == 'post':
     v = False
@@ -46,11 +50,10 @@ if args.command == 'post':
     if args.v: v = True
     if args.h: # or just h = args.h
         try:
-            temp = args.h.split(":")
-            h = {temp[0],temp[1]}
-        except:
-            print("Not in \'key:value\' format")
-            exit()
+            h = {}
+            for pair in args.h:
+                first, second = pair.split(":")
+                h[first] = second
     if args.d: d = args.d
     if args.f: # or just f = args.f
         try:
