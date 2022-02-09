@@ -1,9 +1,12 @@
 import argparse
+import socket
+import sys
 from httpl import GET, POST
 
 parser = argparse.ArgumentParser(
 description='httpc is our take on a curl-like application restricted to the HTTP protocol.',
 epilog="Use \"httpc help -[command]\" for more information about a command", add_help=False)
+
 subparser = parser.add_subparsers(dest='command')
 get = subparser.add_parser('get',add_help=False, help='Get executes a HTTP GET request for a given URL.')
 post = subparser.add_parser('post',add_help=False, help='Post executes a HTTP POST request for a given URL with inline data or from file.')
@@ -23,51 +26,74 @@ post.add_argument('url', type=str,help= 'hostname')
 help.add_argument('-get', action='store_true')
 help.add_argument('-post', action='store_true')
 
+parser.add_argument("--host", help="server host", default="httpbin.org")
+parser.add_argument("--port", help="server port", type=int, default=80)
 
 args = parser.parse_args()
 
-if args.command == 'get':
-    v = False
-    h = None
-    if args.v: v = True
-    if args.h: # or just h = args.h
-        try:
-            temp = args.h.split(":")
-            h = {temp[0],temp[1]}
-        except:
-            print("Not in \'key:value\' format")
-            exit()
-    print("get(%s,%s,%s)" % (v, h, args.url))
-    GET(v, h, args.url)
+def run_client(host, port):
+    conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        conn.connect((host, port))
+        print("Type any thing then ENTER. Press Ctrl+C to terminate")
+        while True:
+            line = sys.stdin.readline(1024)
 
-if args.command == 'post':
-    v = False
-    h = None
-    d = None
-    f = None
-    if args.v: v = True
-    if args.h: # or just h = args.h
-        try:
-            temp = args.h.split(":")
-            h = {temp[0],temp[1]}
-        except:
-            print("Not in \'key:value\' format")
-            exit()
-    if args.d: d = args.d
-    if args.f: # or just f = args.f
-        try:
-            with open(args.d, 'rb') as file:
-                f={args.d: file}
-        except:
-            print("File could not be opened")
-            exit()
-    print("post(%s,%s,%s,%s,%s)" % (v, h, d, f, args.url))
-    POST(v, h, d, f, args.url)
+            request = line.encode()
+            conn.sendall(request)
+            # MSG_WAITALL waits for full request or error
+            response = conn.recv(4096)
+            sys.stdout.write("Output:\n")
+            sys.stdout.write(response.decode("utf-8"))
+    finally:
+        conn.close()
 
-if args.command == 'help':
-    if args.get:
-        get.print_help()
-    elif args.post:
-        post.print_help()
-    else:
-        parser.print_help()
+run_client(args.host, args.port)
+
+"""
+    if args.command == 'get':
+        v = False
+        h = None
+        if args.v: v = True
+        if args.h:  # or just h = args.h
+            try:
+                temp = args.h.split(":")
+                h = {temp[0], temp[1]}
+            except:
+                print("Not in \'key:value\' format")
+                exit()
+        print("get(%s,%s,%s)" % (v, h, args.url))
+        GET(v, h, args.url)
+
+    if args.command == 'post':
+        v = False
+        h = None
+        d = None
+        f = None
+        if args.v: v = True
+        if args.h:  # or just h = args.h
+            try:
+                temp = args.h.split(":")
+                h = {temp[0], temp[1]}
+            except:
+                print("Not in \'key:value\' format")
+                exit()
+        if args.d: d = args.d
+        if args.f:  # or just f = args.f
+            try:
+                with open(args.d, 'rb') as file:
+                    f = {args.d: file}
+            except:
+                print("File could not be opened")
+                exit()
+        print("post(%s,%s,%s,%s,%s)" % (v, h, d, f, args.url))
+        POST(v, h, d, f, args.url)
+
+    if args.command == 'help':
+        if args.get:
+            get.print_help()
+        elif args.post:
+            post.print_help()
+        else:
+            parser.print_help()
+"""
