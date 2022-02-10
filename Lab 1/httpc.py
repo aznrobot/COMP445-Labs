@@ -54,6 +54,9 @@ if args.command == 'post':
             for pair in args.h:
                 first, second = pair.split(":")
                 h[first] = second
+        except:
+            print("Error with -h")
+            exit()
     if args.d: d = args.d
     if args.f: # or just f = args.f
         try:
