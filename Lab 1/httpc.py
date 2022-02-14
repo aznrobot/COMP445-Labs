@@ -66,6 +66,7 @@ if args.command == 'post':
             print("File could not be opened")
             exit()
     print("post(%s,%s,%s,%s,%s)" % (v, h, d, f, args.url))
+    methods.post(v, h, d, f, args.url)
 
 if args.command == 'help':
     if args.get:

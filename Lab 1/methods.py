@@ -65,7 +65,7 @@ def post(v, h, d, f, url):
 
     if h != None:
         for key, value in h.items():
-            request += key + ":" +value + "\n"
+            request += key + ":" + value + "\n"
 
     if d != None:
         request += "\n" + d + "\n"
