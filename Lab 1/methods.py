@@ -34,9 +34,6 @@ def get(v, h, url):
     response = client.recv(4096)
     http_response = response.decode()
 
-    # Close Connection
-    client.send("Connection: close".encode())
-
     # display the response
     print(http_response)
 
