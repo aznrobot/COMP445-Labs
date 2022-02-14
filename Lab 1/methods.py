@@ -13,70 +13,67 @@ def get(v, h, url):
 
     request = "GET " + tail
 
-    if h != None:
-        request += "/get?"
-        amperCounter = len(h) -1
-        for key, value in h.items():
-            request += key + "=" + value
-            if amperCounter < 0:
-                request += "&"
-                amperCounter -= 1
-
     if v:
-        request += " HTTP/1.1\nhost: "
+        request += " HTTP/1.1\nHost: "
     else:
-        request += "\nhost: "
+        request += "\nHost: "
+
+    request += host + "\n"
+
+    if h != None:
+        for key, value in h.items():
+            request += key + ":" +value + "\n"
 
 
-    request += host + "\n\n"
-
+    request += "\n"
     print("***" + request)
 
     client.send(request.encode())
 
-
-
     # receive some data
     response = client.recv(4096)
     http_response = response.decode()
+
+    # Close Connection
+    client.send("Connection: close".encode())
 
     # display the response
     print(http_response)
 
 # print(get(True,None,"http://httpbin.org/get?course=networking&assignment=1")) # testing v
 # print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h
-print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h and v
+#print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h and v
 
 def post(v, h, d, f, url):
     urlObj = urlparse(url)
     host = urlObj.netloc
     port = 80
-    #urlIndex = url.index(host) + len(host)
-    #tail = url[urlIndex:]
+    urlIndex = url.index(host) + len(host)
+    tail = url[urlIndex:]
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((host, port))
 
-    request = "POST " #+ tail
+    request = "POST " + tail
 
     if v:
-        request += "/post HTTP/1.1\nhost: "
+        request += " HTTP/1.1\nhost: "
     else:
         request += "\nhost: "
 
-    request += host + "\nConnection: close\n"
+    request += host + "\n"
 
     if h != None:
-        request += "Content-type: " + h + "\n"
-        amperCounter = len(h) - 1
         for key, value in h.items():
-            request += key + "=" + value
-            if amperCounter < 0:
-                request += "&"
-                amperCounter -= 1
-    #Count content length and add to request
-    contentLen = 0
-    request += f"Content-length: {contentLen} " + "\n\n{\"test\":true}"
+            request += key + ":" +value + "\n"
+
+    if d != None:
+        request += "\n" + d + "\n"
+
+    if f != None:
+        request += "\n" + f + "\n"
+
+    request += "\n"
     print("***" + request)
 
     client.send(request.encode())
