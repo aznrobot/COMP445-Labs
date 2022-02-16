@@ -19,7 +19,7 @@ def get(v, h, url):
         request += "\nHost: "
 
     request += host + "\n"
-
+    request += "Connection: close \n"
     if h != None:
         for key, value in h.items():
             request += key + ":" +value + "\n"
@@ -53,16 +53,19 @@ def post(v, h, d, f, url):
 
     request = "POST " + tail
 
-    if v:
-        request += " HTTP/1.1\nhost: "
-    else:
-        request += "\nhost: "
-
+    #if v:
+        #request += " HTTP/1.1\nhost: "
+    #else:
+        #request += "\nhost: "
+    request += " HTTP/1.1\nhost: "
     request += host + "\n"
 
     if h != None:
         for key, value in h.items():
+            request += "Accept: " + value + "\n"
             request += key + ":" + value + "\n"
+
+    request += "\n"
 
     if d != None:
         request += "\n" + d + "\n"
@@ -70,7 +73,6 @@ def post(v, h, d, f, url):
     if f != None:
         request += "\n" + f + "\n"
 
-    request += "\n"
     print("***" + request)
 
     client.send(request.encode())
