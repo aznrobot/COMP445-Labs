@@ -24,7 +24,7 @@ def get(v, h, url):
             request += key + ":" + value + "\n"
 
     request += "\n"
-    print("***" + request)
+    print("----------\n" + request+"\n----------" )
 
     client.send(request.encode())
 
@@ -36,8 +36,8 @@ def get(v, h, url):
     if v:
         print(http_response)
     else:
-        temp = http_response.index('{')
-        print(http_response[temp:])
+        vIndex = http_response.index('{')
+        print(http_response[vIndex:])
 
 # print(get(False,None,"http://httpbin.org/get?course=networking&assignment=1")) # testing v
 # print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h
@@ -88,8 +88,8 @@ def post(v, h, d, f, url):
     if v:
         print(http_response)
     else:
-        temp = http_response.index('{')
-        print(http_response[temp:])
+        vIndex = http_response.index('{')
+        print(http_response[vIndex:])
 
 
 # print(post(True,{"Content-Type":"application/json"},'{"Assignment": 1}',None,"http://httpbin.org/post"))
