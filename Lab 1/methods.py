@@ -67,15 +67,19 @@ def post(v, h, d, f, url):
             request += "Accept: " + value + "\n"
             request += key + ":" + value + "\n"
 
-    content_len = len(str(d))
-    request += "Content-Length: " + str(content_len) + "\n"
-    request += "\n"
 
     if d != None:
+        content_len = len(str(d))
+        request += "Content-Length: " + str(content_len) + "\n"
+        request += "\n"
         request += d + "\n"
 
     if f != None:
-        request += f + "\n"
+        file = open(f,"r")
+        content_len = len(file)
+        request += "Content-Length: " + str(content_len) + "\n"
+        request += "\n"
+        request += file.read() + "\n"
 
     print("***" + request)
 
