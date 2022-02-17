@@ -1,5 +1,7 @@
 import socket
 from urllib.parse import urlparse
+import json
+import pickle
 
 def get(v, h, url):
     urlObj = urlparse(url)
@@ -59,19 +61,21 @@ def post(v, h, d, f, url):
         #request += "\nhost: "
     request += " HTTP/1.1\nhost: "
     request += host + "\n"
-
+    request += "Connection: close \n"
     if h != None:
         for key, value in h.items():
             request += "Accept: " + value + "\n"
             request += key + ":" + value + "\n"
 
+    content_len = len(str(d))
+    request += "Content-Length: " + str(content_len) + "\n"
     request += "\n"
 
     if d != None:
-        request += "\n" + d + "\n"
+        request += d + "\n"
 
     if f != None:
-        request += "\n" + f + "\n"
+        request += f + "\n"
 
     print("***" + request)
 
