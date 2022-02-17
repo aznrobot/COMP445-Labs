@@ -3,7 +3,11 @@ from urllib.parse import urlparse
 import json
 import pickle
 
-def get(v, h, url):
+def get(v, h, url,counter=5):
+    if counter == 0:
+        print("Only 5 redirect attempts are allowed")
+        exit()
+
     urlObj = urlparse(url)
     host = urlObj.netloc
     port = 80
@@ -24,7 +28,6 @@ def get(v, h, url):
             request += key + ":" + value + "\n"
 
     request += "\n"
-    print("----------\n" + request+"\n----------" )
 
     client.send(request.encode())
 
@@ -32,14 +35,28 @@ def get(v, h, url):
     response = client.recv(4096)
     http_response = response.decode()
 
-    # display the response
-    if v:
-        print(http_response)
+    # Check if the response is correct
+    http_check = http_response.split("\n", 1)[0]
+    http_status = http_check.split(" ")[1]
+
+    if http_status != "200":
+        print("- URL cannot be reached. HTTP response code: " + http_status + " redirecting to http://httpbin.org -\n")
+        urlObj = urlparse(url)
+        urlIndex = url.index(urlObj.netloc) + len(urlObj.netloc)
+        rest = url[urlIndex:]
+        newURL = "http://httpbin.org" + rest
+        get(v, h, newURL, counter - 1)
+
     else:
-        vIndex = http_response.index('{')
-        print(http_response[vIndex:])
+        # display the response
+        if v:
+            print(http_response)
+        else:
+            vIndex = http_response.index('{')
+            print(http_response[vIndex:])
 
 # print(get(False,None,"http://httpbin.org/get?course=networking&assignment=1")) # testing v
+# print(get(True,None,"https://httpdump.io/get?course=networking&assignment=1")) # testing redirect
 # print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h
 #print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h and v
 
@@ -81,7 +98,6 @@ def post(v, h, d, f, url):
         request += "\n"
         request += lines + "\n"
 
-    print("----------\n" + request+"\n----------" )
 
     client.send(request.encode())
 
@@ -97,4 +113,5 @@ def post(v, h, d, f, url):
         print(http_response[vIndex:])
 
 
-print(post(True,{"Content-Type":"application/json"},None,"temp.txt","http://httpbin.org/post"))
+# print(post(True,{"Content-Type":"application/json"},None,"temp.txt","http://httpbin.org/postdsdsd"))
+# print(post(True,{"Content-Type":"application/json"},None,"temp.txt","https://httpdump.io/9jr9h"))
