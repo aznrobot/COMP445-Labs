@@ -59,12 +59,13 @@ if args.command == 'post':
             exit()
     if args.d: d = args.d
     if args.f: # or just f = args.f
-        try:
-            with open(args.d, 'rb') as file:
-                f={args.d: file}
-        except:
-            print("File could not be opened")
-            exit()
+        # try:
+        #     with open(args.f, 'rb') as file:
+        #         f = file.readlines()
+        # except:
+        #     print("File could not be opened")
+        #     exit()
+        f = args.f
     print("post(%s,%s,%s,%s,%s)" % (v, h, d, f, args.url))
     methods.post(v, h, d, f, args.url)
 

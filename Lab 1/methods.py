@@ -70,11 +70,16 @@ def post(v, h, d, f, url):
         request += d + "\n"
 
     if f != None:
-        file = open(f,"r")
-        content_len = len(file)
+        try:
+            with open(f, "r") as file:
+                lines = file.readline()
+        except:
+            print("File could not be opened")
+            exit()
+        content_len = len(lines)
         request += "Content-Length: " + str(content_len) + "\n"
         request += "\n"
-        request += file.read() + "\n"
+        request += lines + "\n"
 
     print("----------\n" + request+"\n----------" )
 
@@ -92,4 +97,4 @@ def post(v, h, d, f, url):
         print(http_response[vIndex:])
 
 
-# print(post(True,{"Content-Type":"application/json"},'{"Assignment": 1}',None,"http://httpbin.org/post"))
+print(post(True,{"Content-Type":"application/json"},None,"temp.txt","http://httpbin.org/post"))
