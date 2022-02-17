@@ -15,17 +15,13 @@ def get(v, h, url):
 
     request = "GET " + tail
 
-    if v:
-        request += " HTTP/1.1\nHost: "
-    else:
-        request += "\nHost: "
-
+    request += " HTTP/1.1\nhost: "
     request += host + "\n"
     request += "Connection: close \n"
     if h != None:
         for key, value in h.items():
-            request += key + ":" +value + "\n"
-
+            request += "Accept: " + value + "\n"
+            request += key + ":" + value + "\n"
 
     request += "\n"
     print("***" + request)
@@ -37,9 +33,13 @@ def get(v, h, url):
     http_response = response.decode()
 
     # display the response
-    print(http_response)
+    if v:
+        print(http_response)
+    else:
+        temp = http_response.index('{')
+        print(http_response[temp:])
 
-# print(get(True,None,"http://httpbin.org/get?course=networking&assignment=1")) # testing v
+# print(get(False,None,"http://httpbin.org/get?course=networking&assignment=1")) # testing v
 # print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h
 #print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h and v
 
@@ -55,10 +55,6 @@ def post(v, h, d, f, url):
 
     request = "POST " + tail
 
-    #if v:
-        #request += " HTTP/1.1\nhost: "
-    #else:
-        #request += "\nhost: "
     request += " HTTP/1.1\nhost: "
     request += host + "\n"
     request += "Connection: close \n"
@@ -66,7 +62,6 @@ def post(v, h, d, f, url):
         for key, value in h.items():
             request += "Accept: " + value + "\n"
             request += key + ":" + value + "\n"
-
 
     if d != None:
         content_len = len(str(d))
@@ -81,7 +76,7 @@ def post(v, h, d, f, url):
         request += "\n"
         request += file.read() + "\n"
 
-    print("***" + request)
+    print("----------\n" + request+"\n----------" )
 
     client.send(request.encode())
 
@@ -90,5 +85,11 @@ def post(v, h, d, f, url):
     http_response = response.decode()
 
     # display the response
-    print(http_response)
+    if v:
+        print(http_response)
+    else:
+        temp = http_response.index('{')
+        print(http_response[temp:])
 
+
+# print(post(True,{"Content-Type":"application/json"},'{"Assignment": 1}',None,"http://httpbin.org/post"))
