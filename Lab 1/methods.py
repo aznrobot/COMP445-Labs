@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 import json
 import pickle
 
-def get(v, h, url,counter=5):
+def get(v, h, o, url,counter=5):
     if counter == 0:
         print("Only 5 redirect attempts are allowed")
         exit()
@@ -39,7 +39,7 @@ def get(v, h, url,counter=5):
     http_check = http_response.split("\n", 1)[0]
     http_status = http_check.split(" ")[1]
 
-    if http_status != "200":
+    if http_status != "200" and counter != 0:
         print("- URL cannot be reached. HTTP response code: " + http_status + " redirecting to http://httpbin.org -\n")
         urlObj = urlparse(url)
         urlIndex = url.index(urlObj.netloc) + len(urlObj.netloc)
@@ -51,16 +51,25 @@ def get(v, h, url,counter=5):
         # display the response
         if v:
             print(http_response)
+            vIndex = http_response.index('{')
+            output = open(o, "w")
+            output.write(http_response[vIndex:])
+            output.close()
         else:
             vIndex = http_response.index('{')
+            output = open(o, "w")
+            output.write(http_response[vIndex:])
+            output.close()
             print(http_response[vIndex:])
+
+
 
 # print(get(False,None,"http://httpbin.org/get?course=networking&assignment=1")) # testing v
 # print(get(True,None,"https://httpdump.io/get?course=networking&assignment=1")) # testing redirect
 # print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h
 #print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h and v
 
-def post(v, h, d, f, url):
+def post(v, h, d, f, o, url):
     urlObj = urlparse(url)
     host = urlObj.netloc
     port = 80
@@ -108,8 +117,15 @@ def post(v, h, d, f, url):
     # display the response
     if v:
         print(http_response)
+        vIndex = http_response.index('{')
+        output = open(o, "w")
+        output.write(http_response[vIndex:])
+        output.close()
     else:
         vIndex = http_response.index('{')
+        output = open(o, "w")
+        output.write(http_response[vIndex:])
+        output.close()
         print(http_response[vIndex:])
 
 

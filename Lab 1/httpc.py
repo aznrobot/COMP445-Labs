@@ -12,9 +12,11 @@ help = subparser.add_parser('help',add_help=False)
 get.add_argument('-v', action='store_true', help= 'Prints the detail of the response such as protocol, status, and headers.')
 get.add_argument('-h', action='append', type=str,help= 'Associates headers to HTTP Request with the format \'key:value\'')
 get.add_argument('url', type=str,help= 'hostname')
+get.add_argument('-o', type=str, help= 'Creates a file with the name given to save the body of the response to.')
 
 post.add_argument('-v', action='store_true',help= 'Prints the detail of the response such as protocol, status, and headers.')
 post.add_argument('-h', action='append', type=str,help= 'Associates headers to HTTP Request with the format \'key:value\'')
+post.add_argument('-o', type=str, help= 'Creates a file with the name given to save the body of the response to.')
 notBoth = post.add_mutually_exclusive_group()
 notBoth.add_argument('-d', type=str, help= 'Associates an inline data to the body HTTP POST request.')
 notBoth.add_argument('-f', type=str, help= 'Associates the content of a file to the body HTTP POST')
@@ -29,6 +31,7 @@ args = parser.parse_args()
 if args.command == 'get':
     v = False
     h = None
+    o = None
     if args.v: v = True
     if args.h: # or just h = args.h
         try:
@@ -39,14 +42,16 @@ if args.command == 'get':
         except:
             print("Not in \'key:value\' format")
             exit()
-    print("get(%s,%s,%s)" % (v, h, args.url))
-    methods.get(v,h,args.url)
+    if args.o: o = args.o
+    print("get(%s,%s,%s,%s)" % (v, h, o, args.url))
+    methods.get(v,h, o, args.url)
 
 if args.command == 'post':
     v = False
     h = None
     d = None
     f = None
+    o = None
     if args.v: v = True
     if args.h: # or just h = args.h
         try:
@@ -66,8 +71,9 @@ if args.command == 'post':
         #     print("File could not be opened")
         #     exit()
         f = args.f
-    print("post(%s,%s,%s,%s,%s)" % (v, h, d, f, args.url))
-    methods.post(v, h, d, f, args.url)
+    if args.o: o = args.o
+    print("post(%s,%s,%s,%s,%s,%s)" % (v, h, d, f, o, args.url))
+    methods.post(v, h, d, f, o, args.url)
 
 if args.command == 'help':
     if args.get:
