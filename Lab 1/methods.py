@@ -52,14 +52,16 @@ def get(v, h, o, url,counter=5):
         if v:
             print(http_response)
             vIndex = http_response.index('{')
-            output = open(o, "w")
-            output.write(http_response[vIndex:])
-            output.close()
+            if o != None:
+                output = open(o, "w")
+                output.write(http_response[vIndex:])
+                output.close()
         else:
             vIndex = http_response.index('{')
-            output = open(o, "w")
-            output.write(http_response[vIndex:])
-            output.close()
+            if o != None:
+                output = open(o, "w")
+                output.write(http_response[vIndex:])
+                output.close()
             print(http_response[vIndex:])
 
 
@@ -118,14 +120,16 @@ def post(v, h, d, f, o, url):
     if v:
         print(http_response)
         vIndex = http_response.index('{')
-        output = open(o, "w")
-        output.write(http_response[vIndex:])
-        output.close()
+        if o != None:
+            output = open(o, "w")
+            output.write(http_response[vIndex:])
+            output.close()
     else:
         vIndex = http_response.index('{')
-        output = open(o, "w")
-        output.write(http_response[vIndex:])
-        output.close()
+        if o != None:
+            output = open(o, "w")
+            output.write(http_response[vIndex:])
+            output.close()
         print(http_response[vIndex:])
 
 
