@@ -32,7 +32,7 @@ def get(v, h, o, url,counter=5):
     client.send(request.encode())
 
     # receive some data
-    response = client.recv(4096)
+    response = client.recv(-1)
     http_response = response.decode()
 
     # Check if the response is correct
@@ -113,7 +113,7 @@ def post(v, h, d, f, o, url):
     client.send(request.encode())
 
     # receive response
-    response = client.recv(4096)
+    response = client.recv(-1)
     http_response = response.decode()
 
     # display the response
