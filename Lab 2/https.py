@@ -1,8 +1,9 @@
 import socket
 import threading
 import argparse
+import glob
 
-def run_server(host, port):
+def run_server(host, port, path):
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         listener.bind((host, port))
@@ -11,31 +12,43 @@ def run_server(host, port):
         while True:
             conn, addr = listener.accept()
             # Assigns a thread to manage a client connection
-            threading.Thread(target=handle_client, args=(conn, addr)).start()
+            threading.Thread(target=handle_client, args=(conn, addr, path)).start()
     finally:
         listener.close()
 
 
-def handle_client(conn, addr):
+def handle_client(conn, addr, path):
     print ('New client from', addr)
+    file_directory = path
     try:
         while True:
             # receives the user's message
             data = conn.recv(-1)
+            # Decode message
+            client_message = data.decode()
 
             # Have something here to read the beginning of the message to see if it's GET or POST or HEAD
-            command = data.split(2)[0]
-            location = data.split(2)[1]
+            command = client_message.split(2)[0]
+            rest = client_message.split(2)[1]
             # If-statements to distinguish each of the commands that we'll be using
             if command == "GET":
-                break
+                request = rest.split()[0]
+                # Check file directory path
+                if request == "/":
+                    sendback = str(glob.glob("/*"))
+                else:
+                    try:
+                        f = open(request.replace("/", "") + ".txt", "r") # Assume only text files
+                        sendback = f.read()
+                    except FileNotFoundError:
+                        sendback = "Error 404: File Not Found"
+
             elif command == "POST":
-                break
-            elif command == "HEAD":
-                break
-            else:
-                break
-            conn.sendall(data)
+                filename = rest.split()[0]
+                f = open(filename.replace("/", "") + ".txt", "a")
+                f.write(rest.split()[1])
+
+            conn.sendall(sendback.encode())
     finally:
         conn.close()
 
@@ -47,6 +60,8 @@ def server_post():
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--port", help="server port", type=int, default=8007)
+parser.add_argument("-port", help="server port", type=int, default=8080)
+parser.add_argument("-d", help="File Directory Path", type=str, default="/files")
+parser.add_argument("-v", help="Display Debugging Messages", action='store_true')
 args = parser.parse_args()
-run_server('', args.port)
+run_server('', args.port, args.d)
