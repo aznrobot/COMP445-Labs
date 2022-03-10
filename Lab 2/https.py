@@ -49,7 +49,7 @@ def handle_client(conn, addr, path):
 
             elif command == "POST":
                 filename = rest.split()[0]
-                f = open(filename.replace("/", "") + ".txt", "a")
+                f = open(file_directory + filename + ".txt", "a")
                 f.write(rest.split()[1])
                 sendback = "Status: 200, File was successfully uploaded to server"
             conn.sendall(sendback.encode())
