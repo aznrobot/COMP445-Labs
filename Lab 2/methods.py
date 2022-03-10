@@ -3,14 +3,14 @@ from urllib.parse import urlparse
 import json
 import pickle
 
-def get(v, h, o, url,counter=5):
+def get(v, h, o, url, in_port, counter=5):
     if counter == 0:
         print("Only 5 redirect attempts are allowed")
         exit()
 
     urlObj = urlparse(url)
     host = urlObj.netloc
-    port = 80
+    port = in_port
     urlIndex = url.index(host)+len(host)
     tail = url[urlIndex:]
 
@@ -45,7 +45,7 @@ def get(v, h, o, url,counter=5):
         urlIndex = url.index(urlObj.netloc) + len(urlObj.netloc)
         rest = url[urlIndex:]
         newURL = "http://httpbin.org" + rest
-        get(v, h, o, newURL, counter - 1)
+        get(v, h, o, newURL, 80, counter - 1)
 
     else:
         # display the response
@@ -71,10 +71,10 @@ def get(v, h, o, url,counter=5):
 # print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h
 #print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h and v
 
-def post(v, h, d, f, o, url):
+def post(v, h, d, f, o, url, in_port):
     urlObj = urlparse(url)
     host = urlObj.netloc
-    port = 80
+    port = in_port
     urlIndex = url.index(host) + len(host)
     tail = url[urlIndex:]
 

@@ -2,6 +2,7 @@ import socket
 import threading
 import argparse
 import glob
+import os
 
 def run_server(host, port, path):
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -20,6 +21,9 @@ def run_server(host, port, path):
 def handle_client(conn, addr, path):
     print ('New client from', addr)
     file_directory = path
+    # Create new path if default is not chosen
+    if file_directory != "/files":
+        os.mkdir(file_directory)
     try:
         while True:
             # receives the user's message
@@ -35,11 +39,11 @@ def handle_client(conn, addr, path):
                 request = rest.split()[0]
                 # Check file directory path
                 if request == "/":
-                    sendback = str(glob.glob("/*"))
+                    sendback = str(glob.glob(file_directory + "/*"))
                 else:
                     try:
-                        f = open(request.replace("/", "") + ".txt", "r") # Assume only text files
-                        sendback = f.read()
+                        f = open(file_directory + request + ".txt", "r") # Assume only text files
+                        sendback = "Contents of " + request.replace("/", "") + ":\n" + f.read()
                     except FileNotFoundError:
                         sendback = "Error 404: File Not Found"
 
@@ -47,7 +51,7 @@ def handle_client(conn, addr, path):
                 filename = rest.split()[0]
                 f = open(filename.replace("/", "") + ".txt", "a")
                 f.write(rest.split()[1])
-
+                sendback = "Status: 200, File was successfully uploaded to server"
             conn.sendall(sendback.encode())
     finally:
         conn.close()
@@ -62,6 +66,6 @@ def server_post():
 parser = argparse.ArgumentParser()
 parser.add_argument("-port", help="server port", type=int, default=8080)
 parser.add_argument("-d", help="File Directory Path", type=str, default="/files")
-parser.add_argument("-v", help="Display Debugging Messages", action='store_true')
+parser.add_argument("-v", help="Display Debugging Messages", action='store_true') # Work on stock debugging messages
 args = parser.parse_args()
 run_server('', args.port, args.d)
