@@ -45,7 +45,7 @@ if args.command == 'get':
             print("Not in \'key:value\' format")
             exit()
     if args.o: o = args.o
-    print("get(%s,%s,%s,%s)" % (v, h, o, args.url, args.port))
+    print("get(%s,%s,%s,%s,%s)" % (v, h, o, args.url, args.port))
     methods.get(v,h, o, args.url, args.port)
 
 if args.command == 'post':
@@ -74,7 +74,7 @@ if args.command == 'post':
         #     exit()
         f = args.f
     if args.o: o = args.o
-    print("post(%s,%s,%s,%s,%s,%s)" % (v, h, d, f, o, args.url, args.port))
+    print("post(%s,%s,%s,%s,%s,%s,%s)" % (v, h, d, f, o, args.url, args.port))
     methods.post(v, h, d, f, o, args.url, args.port)
 
 if args.command == 'help':
