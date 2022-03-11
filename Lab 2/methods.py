@@ -4,6 +4,9 @@ import json
 import pickle
 
 def get(v, h, o, url, in_port, counter=5):
+    if in_port == None:
+        in_port = 80
+
     if counter == 0:
         print("Only 5 redirect attempts are allowed")
         exit()
@@ -32,7 +35,7 @@ def get(v, h, o, url, in_port, counter=5):
     client.send(request.encode())
 
     # receive some data
-    response = client.recv(-1)
+    response = client.recv(1024)
     http_response = response.decode()
 
     # Check if the response is correct
@@ -113,7 +116,7 @@ def post(v, h, d, f, o, url, in_port):
     client.send(request.encode())
 
     # receive response
-    response = client.recv(-1)
+    response = client.recv(1024)
     http_response = response.decode()
 
     # display the response
