@@ -10,10 +10,11 @@ def run_server(host, port, path, debug):
         listener.bind((host, port))
         listener.listen(5)
         print('Server is listening at', port)
+        # Create new path if default is not chosen
         if path != "files":
             if path not in os.listdir("./"):  # if directory is not accessable, create it
                 if debug:
-                    print("New directory path created \n")
+                    print("New directory path created: /" + path + "\n")
                 os.mkdir(path)
         while True:
             conn, addr = listener.accept()
@@ -27,12 +28,7 @@ def handle_client(conn, addr, path, debug):
     print ('New client from', addr)
     file_directory = path
     sendback = ""
-    # Create new path if default is not chosen
-#    if file_directory != "files":
-#        if file_directory not in os.listdir("./"): #if directory is not accessable, create it
-#            if debug:
-#                print("New directory path created \n")
-#            os.mkdir(file_directory)
+
     try:
         while True:
             # receives the user's message
@@ -54,7 +50,9 @@ def handle_client(conn, addr, path, debug):
                     sendback += "HTTP/1.1 200 OK\n{\n" + str(glob.glob(file_directory + "/*")) + "\n}"
                 else:
                     try:
-                        print(file_directory + "/" + url)
+                        if debug:
+                            print("Retrieving file " + url + " from directory " + file_directory + ": \n")
+                            print(file_directory + "/" + url)
                         sendback += "HTTP/1.1 200 OK\n{\n"
                         with open(file_directory + "/" + url, "r") as file:
                             sendback += file.readline()
@@ -76,12 +74,15 @@ def handle_client(conn, addr, path, debug):
                             sendback += "Error 404: File Not Found \n}"
 
             elif command == "POST":
-                print("Here")
+                if debug:
+                    print("Creating File: " + url + " in directory " + file_directory + "\n")
                 with open(file_directory + "/" + url, "w") as file:
                     file.write(lines[4])
                 sendback += "HTTP/1.1 200 OK\n{\n"
                 sendback += "Status: 200, File was successfully uploaded to server\n}"
-            print(sendback)
+            if debug:
+                print("Return message to client:\n")
+                print(sendback)
             conn.sendall(sendback.encode())
     finally:
         conn.close()
