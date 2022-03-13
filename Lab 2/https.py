@@ -10,6 +10,11 @@ def run_server(host, port, path, debug):
         listener.bind((host, port))
         listener.listen(5)
         print('Server is listening at', port)
+        if path != "files":
+            if path not in os.listdir("./"):  # if directory is not accessable, create it
+                if debug:
+                    print("New directory path created \n")
+                os.mkdir(path)
         while True:
             conn, addr = listener.accept()
             # Assigns a thread to manage a client connection
@@ -23,11 +28,11 @@ def handle_client(conn, addr, path, debug):
     file_directory = path
     sendback = ""
     # Create new path if default is not chosen
-    if file_directory != "files":
-        if file_directory not in os.listdir("./"): #if directory is not accessable, create it
-            if debug:
-                sendback += "New directory path created \n"
-            os.mkdir(file_directory)
+#    if file_directory != "files":
+#        if file_directory not in os.listdir("./"): #if directory is not accessable, create it
+#            if debug:
+#                print("New directory path created \n")
+#            os.mkdir(file_directory)
     try:
         while True:
             # receives the user's message
@@ -44,15 +49,16 @@ def handle_client(conn, addr, path, debug):
                 # Check file directory path
                 if url == "/":
                     if debug:
-                        sendback += "Retrieving file list from directory: \n"
-                    sendback += str(glob.glob(file_directory + "/*"))
+                        print("Retrieving file list from directory: \n")
+                        print(str(glob.glob(file_directory + "/*")) + "\n")
+                    sendback += "HTTP/1.1 200 OK\n{\n" + str(glob.glob(file_directory + "/*")) + "\n}"
                 else:
                     try:
                         print(file_directory + "/" + url)
-                        sendback += "HTTP/1.1 200 OK\n { \n"
+                        sendback += "HTTP/1.1 200 OK\n{\n"
                         with open(file_directory + "/" + url, "r") as file:
                             sendback += file.readline()
-                        sendback += " \n }"
+                        sendback += "\n}"
 
                         # f = open(file_directory + request, "r") # Assume only text files
                         # sendback = "Contents of " + request.replace("/", "") + ":\n" + f.read()
@@ -63,18 +69,18 @@ def handle_client(conn, addr, path, debug):
                         if url.startswith('/'):
                             url = url[1:]
                         if url in listOfAllFiles:
-                            sendback += "HTTP/1.1 405 ERROR\n"
-                            sendback += "Error 405: File located outside working directory"
+                            sendback += "HTTP/1.1 405 ERROR\n{\n"
+                            sendback += "Error 405: File located outside working directory \n}"
                         else:
-                            sendback += "HTTP/1.1 404 ERROR\n"
-                            sendback += "Error 404: File Not Found"
+                            sendback += "HTTP/1.1 404 ERROR\n{\n"
+                            sendback += "Error 404: File Not Found \n}"
 
             elif command == "POST":
                 print("Here")
                 with open(file_directory + "/" + url, "w") as file:
                     file.write(lines[4])
-                sendback += "HTTP/1.1 200 OK\n"
-                sendback += "Status: 200, File was successfully uploaded to server"
+                sendback += "HTTP/1.1 200 OK\n{\n"
+                sendback += "Status: 200, File was successfully uploaded to server\n}"
             print(sendback)
             conn.sendall(sendback.encode())
     finally:
@@ -86,7 +92,11 @@ parser.add_argument("-port", help="server port", type=int, default=8080)
 parser.add_argument("-d", help="File Directory Path", type=str, default="files")
 parser.add_argument("-v", help="Display Debugging Messages", action='store_true') # Work on stock debugging messages
 args = parser.parse_args()
-run_server('', args.port, args.d, args.v)
+if args.v:
+    v = True
+else:
+    v = False
+run_server('', args.port, args.d, v)
 
 # To run server:
 # python https.py -port 1000

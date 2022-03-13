@@ -12,10 +12,15 @@ def get(v, h, o, url, in_port, counter=5):
         exit()
 
     urlObj = urlparse(url)
-    host = urlObj.netloc
+    if bool(urlObj.scheme):
+        host = urlObj.netloc
+        urlIndex = url.index(host) + len(host)
+        tail = url[urlIndex:]
+    else:
+        host = "localhost"
+        tail = url
     port = in_port
-    urlIndex = url.index(host)+len(host)
-    tail = url[urlIndex:]
+
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((host, port))
@@ -75,11 +80,16 @@ def get(v, h, o, url, in_port, counter=5):
 #print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h and v
 
 def post(v, h, d, f, o, url, in_port):
+
     urlObj = urlparse(url)
-    host = urlObj.netloc
+    if bool(urlObj.scheme):
+        host = urlObj.netloc
+        urlIndex = url.index(host) + len(host)
+        tail = url[urlIndex:]
+    else:
+        host = "localhost"
+        tail = url
     port = in_port
-    urlIndex = url.index(host) + len(host)
-    tail = url[urlIndex:]
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((host, port))
