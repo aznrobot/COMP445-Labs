@@ -27,7 +27,6 @@ def run_server(host, port, path, debug):
 def handle_client(conn, addr, path, debug):
     print ('New client from', addr)
     file_directory = path
-    sendback = ""
 
     try:
         while True:
@@ -47,39 +46,55 @@ def handle_client(conn, addr, path, debug):
                     if debug:
                         print("Retrieving file list from directory: \n")
                         print(str(glob.glob(file_directory + "/*")) + "\n")
-                    sendback += "HTTP/1.1 200 OK\n{\n" + str(glob.glob(file_directory + "/*")) + "\n}"
+                    sendback = "HTTP/1.1 200 OK\n{\n" + str(glob.glob(file_directory + "/*")) + "\n}"
                 else:
+                    if url.startswith('/'):
+                        url = url[1:]
                     try:
                         if debug:
                             print("Retrieving file " + url + " from directory " + file_directory + ": \n")
                             print(file_directory + "/" + url)
 
                         with open(file_directory + "/" + url, "r") as file:
-                            sendback += "HTTP/1.1 200 OK\n{\n"
-                            sendback += file.readline()
-                        sendback += "\n}"
+                            sendback = "HTTP/1.1 200 OK\n"
 
-                        # f = open(file_directory + request, "r") # Assume only text files
-                        # sendback = "Contents of " + request.replace("/", "") + ":\n" + f.read()
+                            if url.endswith(".txt"):
+                                sendback += "Content-type: text\n"
+                            elif url.endswith(".jpeg") or url.endswith(".gif"):
+                                sendback += "Content-type: image\n"
+                            elif url.endswith("jmpeg"):
+                                sendback += "Content-type: video\n"
+                            else:
+                                sendback += "Content-type: text/plain; charset=us-ascii\n"
+
+                            sendback += "Content-Disposition: inline ; filename=" + url + "\n{\n}"
+                            sendback += file.readline()
+                            sendback += "\n}"
+
                     except FileNotFoundError:
+                        sendback = "HTTP/1.1 405 ERROR\n{\n"
                         listOfAllFiles = list()
                         for (dirpath, dirnames, filenames) in os.walk("./"):
                             listOfAllFiles += filenames
                         if url.startswith('/'):
                             url = url[1:]
                         if url in listOfAllFiles:
-                            sendback += "HTTP/1.1 405 ERROR\n{\n"
-                            sendback += "Error 405: File located outside working directory \n}"
+                            listOfSubFiles = list()
+                            for (dirpath, dirnames, filenames) in os.walk(file_directory):
+                                listOfSubFiles += filenames
+                            if url in listOfSubFiles:
+                                sendback += "Error 405: File located in a sub directory of the working directory \n}"
+                            else:
+                                sendback += "Error 405: File located outside working directory \n}"
                         else:
-                            sendback += "HTTP/1.1 404 ERROR\n{\n"
-                            sendback += "Error 404: File Not Found \n}"
+                            sendback += "Error 405: File Not Found \n}"
 
             elif command == "POST":
                 if debug:
                     print("Creating File: " + url + " in directory " + file_directory + "\n")
                 with open(file_directory + "/" + url, "w") as file:
                     file.write(lines[4])
-                sendback += "HTTP/1.1 200 OK\n{\n"
+                sendback = "HTTP/1.1 200 OK\n{\n"
                 sendback += "Status: 200, File was successfully uploaded to server\n}"
             if debug:
                 print("Return message to client:\n")

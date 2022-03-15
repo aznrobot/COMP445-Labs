@@ -13,6 +13,7 @@ def get(v, h, o, url, in_port, counter=5):
 
     urlObj = urlparse(url)
     if bool(urlObj.scheme):
+        urlObj = urlparse(url)
         host = urlObj.netloc
         urlIndex = url.index(host) + len(host)
         tail = url[urlIndex:]
@@ -47,7 +48,32 @@ def get(v, h, o, url, in_port, counter=5):
     http_check = http_response.split("\n", 1)[0]
     http_status = http_check.split(" ")[1]
 
+
     if http_status != "200" and counter != 0:
+        if v:
+            print(http_response)
+            vIndex = http_response.index('{')
+            if o != None:
+                output = open(o, "w")
+                output.write(http_response[vIndex:])
+                output.close()
+        else:
+            vIndex = http_response.index('{')
+            if o != None:
+                output = open(o, "w")
+                output.write(http_response[vIndex:])
+                output.close()
+            print(http_response[vIndex:])
+
+        answer = ""
+        while True:
+            answer = input("\n Would you like to be redirected to http://httpbin.org? \n Please enter yes or no\n")
+            if (answer.lower() != "yes") or (answer.lower() != "no"):
+                break
+
+        if answer.lower() == "no":
+            return
+
         print("- URL cannot be reached. HTTP response code: " + http_status + " redirecting to http://httpbin.org -\n")
         urlObj = urlparse(url)
         urlIndex = url.index(urlObj.netloc) + len(urlObj.netloc)
@@ -58,12 +84,12 @@ def get(v, h, o, url, in_port, counter=5):
     else:
         # display the response
         if v:
-            print(http_response)
             vIndex = http_response.index('{')
             if o != None:
                 output = open(o, "w")
                 output.write(http_response[vIndex:])
                 output.close()
+            print(http_response)
         else:
             vIndex = http_response.index('{')
             if o != None:
@@ -80,6 +106,9 @@ def get(v, h, o, url, in_port, counter=5):
 #print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h and v
 
 def post(v, h, d, f, o, url, in_port):
+
+    if in_port == None:
+        in_port = 80
 
     urlObj = urlparse(url)
     if bool(urlObj.scheme):

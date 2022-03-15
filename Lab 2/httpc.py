@@ -13,7 +13,7 @@ get.add_argument('-v', action='store_true', help= 'Prints the detail of the resp
 get.add_argument('-h', action='append', type=str,help= 'Associates headers to HTTP Request with the format \'key:value\'')
 get.add_argument('url', type=str,help= 'hostname')
 get.add_argument('-o', type=str, help= 'Creates a file with the name given to save the body of the response to.')
-get.add_argument("-port", help="server port", type=int, default=8080)
+get.add_argument("-port", help="server port", type=int, default=80)
 
 post.add_argument('-v', action='store_true',help= 'Prints the detail of the response such as protocol, status, and headers.')
 post.add_argument('-h', action='append', type=str,help= 'Associates headers to HTTP Request with the format \'key:value\'')
@@ -22,7 +22,7 @@ notBoth = post.add_mutually_exclusive_group()
 notBoth.add_argument('-d', type=str, help= 'Associates an inline data to the body HTTP POST request.')
 notBoth.add_argument('-f', type=str, help= 'Associates the content of a file to the body HTTP POST')
 post.add_argument('url', type=str,help= 'hostname')
-post.add_argument("-port", help="server port", type=int, default=8080)
+post.add_argument("-port", help="server port", type=int, default=80)
 
 help.add_argument('-get', action='store_true')
 help.add_argument('-post', action='store_true')
