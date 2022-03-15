@@ -84,7 +84,6 @@ def get(v, h, o, url, in_port, counter=5):
     else:
         # display the response
         if v:
-            print(http_response)
             vIndex = http_response.index('{')
             if o != None:
                 output = open(o, "w")

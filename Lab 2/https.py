@@ -49,18 +49,29 @@ def handle_client(conn, addr, path, debug):
                         print(str(glob.glob(file_directory + "/*")) + "\n")
                     sendback = "HTTP/1.1 200 OK\n{\n" + str(glob.glob(file_directory + "/*")) + "\n}"
                 else:
+                    if url.startswith('/'):
+                        url = url[1:]
                     try:
                         if debug:
                             print("Retrieving file " + url + " from directory " + file_directory + ": \n")
                             print(file_directory + "/" + url)
 
                         with open(file_directory + "/" + url, "r") as file:
-                            sendback = "HTTP/1.1 200 OK\n{\n"
+                            sendback = "HTTP/1.1 200 OK\n"
+
+                            if url.endswith(".txt"):
+                                sendback += "Content-type: text\n"
+                            elif url.endswith(".jpeg") or url.endswith(".gif"):
+                                sendback += "Content-type: image\n"
+                            elif url.endswith("jmpeg"):
+                                sendback += "Content-type: video\n"
+                            else:
+                                sendback += "Content-type: text/plain; charset=us-ascii\n"
+
+                            sendback += "Content-Disposition: inline ; filename=" + url + "\n{\n}"
                             sendback += file.readline()
                             sendback += "\n}"
 
-                        # f = open(file_directory + request, "r") # Assume only text files
-                        # sendback = "Contents of " + request.replace("/", "") + ":\n" + f.read()
                     except FileNotFoundError:
                         sendback = "HTTP/1.1 405 ERROR\n{\n"
                         listOfAllFiles = list()
