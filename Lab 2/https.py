@@ -53,8 +53,9 @@ def handle_client(conn, addr, path, debug):
                         if debug:
                             print("Retrieving file " + url + " from directory " + file_directory + ": \n")
                             print(file_directory + "/" + url)
-                        sendback += "HTTP/1.1 200 OK\n{\n"
+
                         with open(file_directory + "/" + url, "r") as file:
+                            sendback += "HTTP/1.1 200 OK\n{\n"
                             sendback += file.readline()
                         sendback += "\n}"
 
