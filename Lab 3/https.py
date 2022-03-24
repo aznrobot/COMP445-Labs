@@ -5,7 +5,7 @@ import glob
 import os
 
 def run_server(host, port, path, debug):
-    listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    listener = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         listener.bind((host, port))
         listener.listen(5)
@@ -17,21 +17,19 @@ def run_server(host, port, path, debug):
                     print("New directory path created: /" + path + "\n")
                 os.mkdir(path)
         while True:
-            conn, addr = listener.accept()
+            data, sender = listener.recvfrom(1024)
             # Assigns a thread to manage a client connection
-            threading.Thread(target=handle_client, args=(conn, addr, path, debug)).start()
+            threading.Thread(target=handle_client, args=(listener, data, sender, path, debug)).start()
     finally:
         listener.close()
 
 
-def handle_client(conn, addr, path, debug):
-    print ('New client from', addr)
+def handle_client(listener, data, sender, path, debug):
+    print ('New client from', sender)
     file_directory = path
 
     try:
         while True:
-            # receives the user's message
-            data = conn.recv(1024)
             # Decode message
             client_message = data.decode()
             if len(client_message) < 1: #skip empty messages are received
@@ -99,9 +97,9 @@ def handle_client(conn, addr, path, debug):
             if debug:
                 print("Return message to client:\n")
                 print(sendback)
-            conn.sendall(sendback.encode())
+            listener.sendall(sendback.encode())
     finally:
-        conn.close()
+        listener.close()
 
 
 parser = argparse.ArgumentParser()

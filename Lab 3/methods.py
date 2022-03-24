@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 import json
 import pickle
 
-def get(v, h, o, url, in_port, counter=5):
+def get(v, h, o, url, in_port, counter=5, timeout=5, ifTimedOut = False):
     if in_port == None:
         in_port = 80
 
@@ -23,8 +23,7 @@ def get(v, h, o, url, in_port, counter=5):
     port = in_port
 
 
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect((host, port))
+    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     request = "GET " + tail
 
@@ -37,66 +36,74 @@ def get(v, h, o, url, in_port, counter=5):
             request += key + ":" + value + "\n"
 
     request += "\n"
+    try:
+        client.sendto(request.encode(), (host, port))
+        # Set a timeout
+        client.settimeout(timeout)
+        print('Waiting for a response')
+        # receive some data
+        response, sender = client.recvfrom(1024)
+        http_response = response.decode()
 
-    client.send(request.encode())
-
-    # receive some data
-    response = client.recv(1024)
-    http_response = response.decode()
-
-    # Check if the response is correct
-    http_check = http_response.split("\n", 1)[0]
-    http_status = http_check.split(" ")[1]
+        # Check if the response is correct
+        http_check = http_response.split("\n", 1)[0]
+        http_status = http_check.split(" ")[1]
 
 
-    if http_status != "200" and counter != 0:
-        if v:
-            print(http_response)
-            vIndex = http_response.index('{')
-            if o != None:
-                output = open(o, "w")
-                output.write(http_response[vIndex:])
-                output.close()
+        if http_status != "200" and counter != 0:
+            if v:
+                print(http_response)
+                vIndex = http_response.index('{')
+                if o != None:
+                    output = open(o, "w")
+                    output.write(http_response[vIndex:])
+                    output.close()
+            else:
+                vIndex = http_response.index('{')
+                if o != None:
+                    output = open(o, "w")
+                    output.write(http_response[vIndex:])
+                    output.close()
+                print(http_response[vIndex:])
+
+            answer = ""
+            while True:
+                answer = input("\n Would you like to be redirected to http://httpbin.org? \n Please enter yes or no\n")
+                if (answer.lower() != "yes") or (answer.lower() != "no"):
+                    break
+
+            if answer.lower() == "no":
+                return
+
+            print("- URL cannot be reached. HTTP response code: " + http_status + " redirecting to http://httpbin.org -\n")
+            urlObj = urlparse(url)
+            urlIndex = url.index(urlObj.netloc) + len(urlObj.netloc)
+            rest = url[urlIndex:]
+            newURL = "http://httpbin.org" + rest
+            get(v, h, o, newURL, 80, counter - 1)
+
         else:
-            vIndex = http_response.index('{')
-            if o != None:
-                output = open(o, "w")
-                output.write(http_response[vIndex:])
-                output.close()
-            print(http_response[vIndex:])
+            # display the response
+            if v:
+                vIndex = http_response.index('{')
+                if o != None:
+                    output = open(o, "w")
+                    output.write(http_response[vIndex:])
+                    output.close()
+                print(http_response)
+            else:
+                vIndex = http_response.index('{')
+                if o != None:
+                    output = open(o, "w")
+                    output.write(http_response[vIndex:])
+                    output.close()
+                print(http_response[vIndex:])
 
-        answer = ""
-        while True:
-            answer = input("\n Would you like to be redirected to http://httpbin.org? \n Please enter yes or no\n")
-            if (answer.lower() != "yes") or (answer.lower() != "no"):
-                break
-
-        if answer.lower() == "no":
-            return
-
-        print("- URL cannot be reached. HTTP response code: " + http_status + " redirecting to http://httpbin.org -\n")
-        urlObj = urlparse(url)
-        urlIndex = url.index(urlObj.netloc) + len(urlObj.netloc)
-        rest = url[urlIndex:]
-        newURL = "http://httpbin.org" + rest
-        get(v, h, o, newURL, 80, counter - 1)
-
-    else:
-        # display the response
-        if v:
-            vIndex = http_response.index('{')
-            if o != None:
-                output = open(o, "w")
-                output.write(http_response[vIndex:])
-                output.close()
-            print(http_response)
+    except socket.timeout:
+        if ifTimedOut:
+            print('No response after {}s'.format(timeout))
         else:
-            vIndex = http_response.index('{')
-            if o != None:
-                output = open(o, "w")
-                output.write(http_response[vIndex:])
-                output.close()
-            print(http_response[vIndex:])
+            get(v, h, o, url, in_port, counter=5, timeout=10, ifTimedOut=True)
 
 
 
@@ -105,7 +112,7 @@ def get(v, h, o, url, in_port, counter=5):
 # print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h
 #print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h and v
 
-def post(v, h, d, f, o, url, in_port):
+def post(v, h, d, f, o, url, in_port, timeout=5, ifTimedOut = False):
 
     if in_port == None:
         in_port = 80
@@ -120,8 +127,7 @@ def post(v, h, d, f, o, url, in_port):
         tail = url
     port = in_port
 
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect((host, port))
+    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     request = "POST " + tail
 
@@ -151,29 +157,36 @@ def post(v, h, d, f, o, url, in_port):
         request += "\n"
         request += lines + "\n"
 
+    try:
+        client.sendto(request.encode(), (host, port))
+        # Set a timeout
+        client.settimeout(timeout)
+        print('Waiting for a response')
+        # receive response
+        response = client.recv(1024)
+        http_response = response.decode()
 
-    client.send(request.encode())
+        # display the response
+        if v:
+            print(http_response)
+            vIndex = http_response.index('{')
+            if o != None:
+                output = open(o, "w")
+                output.write(http_response[vIndex:])
+                output.close()
+        else:
+            vIndex = http_response.index('{')
+            if o != None:
+                output = open(o, "w")
+                output.write(http_response[vIndex:])
+                output.close()
+            print(http_response[vIndex:])
 
-    # receive response
-    response = client.recv(1024)
-    http_response = response.decode()
-
-    # display the response
-    if v:
-        print(http_response)
-        vIndex = http_response.index('{')
-        if o != None:
-            output = open(o, "w")
-            output.write(http_response[vIndex:])
-            output.close()
-    else:
-        vIndex = http_response.index('{')
-        if o != None:
-            output = open(o, "w")
-            output.write(http_response[vIndex:])
-            output.close()
-        print(http_response[vIndex:])
-
+    except socket.timeout:
+        if ifTimedOut:
+            print('No response after {}s'.format(timeout))
+        else:
+            post(v, h, d, f, o, url, in_port, timeout=10, ifTimedOut=True)
 
 # print(post(True,{"Content-Type":"application/json"},None,"temp.txt","http://httpbin.org/postdsdsd"))
 # print(post(True,{"Content-Type":"application/json"},None,"temp.txt","https://httpdump.io/9jr9h"))
