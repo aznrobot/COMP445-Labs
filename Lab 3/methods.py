@@ -2,10 +2,16 @@ import socket
 from urllib.parse import urlparse
 import json
 import pickle
+import ipaddress
+import packet
 
-def get(v, h, o, url, in_port, counter=5, timeout=5, ifTimedOut = False):
+def get(v, h, o, url, in_port, router_url, router_port, counter=5, timeout=5, ifTimedOut = False):
     if in_port == None:
         in_port = 80
+    if router_port == None:
+        router_port = 3000
+    if router_url == None:
+        router_url = 'localhost'
 
     if counter == 0:
         print("Only 5 redirect attempts are allowed")
@@ -36,8 +42,11 @@ def get(v, h, o, url, in_port, counter=5, timeout=5, ifTimedOut = False):
             request += key + ":" + value + "\n"
 
     request += "\n"
+
+    # Create packet here
+
     try:
-        client.sendto(request.encode(), (host, port))
+        client.sendto(request.encode(), (router_url, router_port))
         # Set a timeout
         client.settimeout(timeout)
         print('Waiting for a response')
@@ -80,7 +89,7 @@ def get(v, h, o, url, in_port, counter=5, timeout=5, ifTimedOut = False):
             urlIndex = url.index(urlObj.netloc) + len(urlObj.netloc)
             rest = url[urlIndex:]
             newURL = "http://httpbin.org" + rest
-            get(v, h, o, newURL, 80, counter - 1)
+            get(v, h, o, newURL, 80, router_url, router_port, counter - 1)
 
         else:
             # display the response
@@ -103,7 +112,7 @@ def get(v, h, o, url, in_port, counter=5, timeout=5, ifTimedOut = False):
         if ifTimedOut:
             print('No response after {}s'.format(timeout))
         else:
-            get(v, h, o, url, in_port, counter=5, timeout=10, ifTimedOut=True)
+            get(v, h, o, url, in_port, router_url, router_port, counter=5, timeout=10, ifTimedOut=True)
 
 
 
@@ -112,10 +121,14 @@ def get(v, h, o, url, in_port, counter=5, timeout=5, ifTimedOut = False):
 # print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h
 #print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h and v
 
-def post(v, h, d, f, o, url, in_port, timeout=5, ifTimedOut = False):
+def post(v, h, d, f, o, url, in_port, router_url, router_port, timeout=5, ifTimedOut = False):
 
     if in_port == None:
         in_port = 80
+    if router_port == None:
+        router_port = 3000
+    if router_url == None:
+        router_url = 'localhost'
 
     urlObj = urlparse(url)
     if bool(urlObj.scheme):
@@ -157,8 +170,10 @@ def post(v, h, d, f, o, url, in_port, timeout=5, ifTimedOut = False):
         request += "\n"
         request += lines + "\n"
 
+    # Create packet here
+
     try:
-        client.sendto(request.encode(), (host, port))
+        client.sendto(request.encode(), (router_url, router_port))
         # Set a timeout
         client.settimeout(timeout)
         print('Waiting for a response')
@@ -186,7 +201,7 @@ def post(v, h, d, f, o, url, in_port, timeout=5, ifTimedOut = False):
         if ifTimedOut:
             print('No response after {}s'.format(timeout))
         else:
-            post(v, h, d, f, o, url, in_port, timeout=10, ifTimedOut=True)
+            post(v, h, d, f, o, url, in_port, router_url, router_port, timeout=10, ifTimedOut=True)
 
 # print(post(True,{"Content-Type":"application/json"},None,"temp.txt","http://httpbin.org/postdsdsd"))
 # print(post(True,{"Content-Type":"application/json"},None,"temp.txt","https://httpdump.io/9jr9h"))

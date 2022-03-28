@@ -1,5 +1,7 @@
 import argparse
 import methods
+import ipaddress
+import packet
 
 parser = argparse.ArgumentParser(
 description='httpc is our take on a curl-like application restricted to the HTTP protocol.',
@@ -11,9 +13,14 @@ help = subparser.add_parser('help',add_help=False)
 
 get.add_argument('-v', action='store_true', help= 'Prints the detail of the response such as protocol, status, and headers.')
 get.add_argument('-h', action='append', type=str,help= 'Associates headers to HTTP Request with the format \'key:value\'')
-get.add_argument('url', type=str,help= 'hostname')
+
+get.add_argument('url', type=str,help= 'hostname', default ='localhost')
+get.add_argument('-rhost', type=str,help= 'router hostname', default ='localhost')
+
 get.add_argument('-o', type=str, help= 'Creates a file with the name given to save the body of the response to.')
+
 get.add_argument("-port", help="server port", type=int, default=80)
+get.add_argument("-rport", help="router port", type=int, default=3000)
 
 post.add_argument('-v', action='store_true',help= 'Prints the detail of the response such as protocol, status, and headers.')
 post.add_argument('-h', action='append', type=str,help= 'Associates headers to HTTP Request with the format \'key:value\'')
@@ -21,8 +28,12 @@ post.add_argument('-o', type=str, help= 'Creates a file with the name given to s
 notBoth = post.add_mutually_exclusive_group()
 notBoth.add_argument('-d', type=str, help= 'Associates an inline data to the body HTTP POST request.')
 notBoth.add_argument('-f', type=str, help= 'Associates the content of a file to the body HTTP POST')
-post.add_argument('url', type=str,help= 'hostname')
+
+post.add_argument('url', type=str,help= 'hostname', default ='localhost')
+post.add_argument('-rhost', type=str,help= 'router hostname', default ='localhost')
+
 post.add_argument("-port", help="server port", type=int, default=80)
+post.add_argument("-rport", help="router port", type=int, default=3000)
 
 help.add_argument('-get', action='store_true')
 help.add_argument('-post', action='store_true')
@@ -45,8 +56,8 @@ if args.command == 'get':
             print("Not in \'key:value\' format")
             exit()
     if args.o: o = args.o
-    print("get(%s,%s,%s,%s,%s)" % (v, h, o, args.url, args.port))
-    methods.get(v,h, o, args.url, args.port)
+    print("get(%s,%s,%s,%s,%s,%s,%s)" % (v, h, o, args.url, args.port, args.rhost, args.rport))
+    methods.get(v,h, o, args.url, args.port, args.rhost, args.rport)
 
 if args.command == 'post':
     v = False
@@ -74,8 +85,8 @@ if args.command == 'post':
         #     exit()
         f = args.f
     if args.o: o = args.o
-    print("post(%s,%s,%s,%s,%s,%s,%s)" % (v, h, d, f, o, args.url, args.port))
-    methods.post(v, h, d, f, o, args.url, args.port)
+    print("post(%s,%s,%s,%s,%s,%s,%s,%s,%s)" % (v, h, d, f, o, args.url, args.port, args.rhost, args.rport))
+    methods.post(v, h, d, f, o, args.url, args.port, args.rhost, args.rport)
 
 if args.command == 'help':
     if args.get:
