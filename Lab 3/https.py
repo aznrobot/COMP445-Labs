@@ -4,13 +4,13 @@ import argparse
 import glob
 import os
 import ipaddress
-import packet
+from packet import *
 
 def run_server(host, port, path, debug):
     listener = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         listener.bind((host, port))
-        listener.listen(5)
+        #listener.listen(5)
         print('Server is listening at', port)
         # Create new path if default is not chosen
         if path != "files":
@@ -21,19 +21,29 @@ def run_server(host, port, path, debug):
         while True:
             data, sender = listener.recvfrom(1024)
             # Assigns a thread to manage a client connection
-            threading.Thread(target=handle_client, args=(listener, data, sender, path, debug)).start()
+            #threading.Thread(target=handle_client, args=(listener, data, sender, path, debug)).start()
+            handle_client(listener, data, sender, path, debug)
     finally:
         listener.close()
 
 
 def handle_client(listener, data, sender, path, debug):
     print ('New client from', sender)
-    file_directory = path
+    recv_packet = Packet.from_bytes(data)
+    if(recv_packet.packet_type == 0):
+        syn_ack_packet = recv_packet
+        syn_ack_packet.packet_type = 1
+        listener.sendto(syn_ack_packet.to_bytes(), sender)
+        print("Sent SYN-ACK to client %s %s" %  (syn_ack_packet.peer_ip_addr, syn_ack_packet.peer_port))
 
+    data, sender = listener.recvfrom(1024)
+
+    file_directory = path
     try:
         while True:
             # Decode message
-            client_message = data.decode()
+            recv_packet = Packet.from_bytes(data)
+            client_message = recv_packet.payload.decode()
             if len(client_message) < 1: #skip empty messages are received
                 break
 
@@ -67,7 +77,7 @@ def handle_client(listener, data, sender, path, debug):
                             else:
                                 sendback += "Content-type: text/plain; charset=us-ascii\n"
 
-                            sendback += "Content-Disposition: inline ; filename=" + url + "\n{\n}"
+                            sendback += "Content-Disposition: inline ; filename=" + url + "\n{\n"
                             sendback += file.readline()
                             sendback += "\n}"
 
@@ -99,9 +109,15 @@ def handle_client(listener, data, sender, path, debug):
             if debug:
                 print("Return message to client:\n")
                 print(sendback)
-            listener.sendall(sendback.encode())
+
+            recv_packet.packet_type = 2
+            recv_packet.payload = sendback.encode()
+            listener.sendto(recv_packet.to_bytes(), sender)
+            break
+
+        print("Sent response to client %s %s" % (recv_packet.peer_ip_addr, recv_packet.peer_port))
     finally:
-        listener.close()
+        print("Client serviced")
 
 
 parser = argparse.ArgumentParser()
@@ -115,8 +131,11 @@ else:
     v = False
 run_server('', args.port, args.d, v)
 
+# To run router:
+# ./router
+#
 # To run server:
 # python https.py -port 1000
 #
 # To run client:
-# python httpc.py get  -port 1000 “text.txt”
+# python httpc.py get  -port 1000 -rport 3000 “text.txt”
