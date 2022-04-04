@@ -149,29 +149,29 @@ def get(v, h, o, url, in_port, router_url, router_port, counter=5, timeout=5, if
                 output.close()
             print(http_response[vIndex:])
 
-    # # Create ACK to server
-    # ack_packet = Packet(packet_type=3,
-    #                         seq_num=3,
-    #                         peer_ip_addr=dest_ip,
-    #                         peer_port=port,
-    #                         payload="Got it!".encode())
-    # client.sendto(ack_packet.to_bytes(), (router_url, router_port))
-    # print("ACK packet sent to server")
-    # while True:
-    #     try:
-    #         # Set a timeout
-    #         client.settimeout(timeout)
-    #         print('Waiting for a response')
-    #         # receive some data
-    #         response, sender = client.recvfrom(1024)
-    #         print('Received ACK from server')
-    #         recv_packet = Packet.from_bytes(response)
-    #         if (recv_packet.packet_type == 3 and recv_packet.seq_num == 3):
-    #             break
-    #     except socket.timeout:
-    #         print("Timeout occurred, resending...")
-    #         client.sendto(request_packet.to_bytes(), (router_url, router_port))
-    #         print("ACK packet sent to server")
+    # Create ACK to server
+    ack_packet = Packet(packet_type=3,
+                            seq_num=3,
+                            peer_ip_addr=dest_ip,
+                            peer_port=port,
+                            payload="Got it!".encode())
+    client.sendto(ack_packet.to_bytes(), (router_url, router_port))
+    print("ACK packet sent to server")
+    while True:
+        try:
+            # Set a timeout
+            client.settimeout(timeout)
+            print('Waiting for a response')
+            # receive some data
+            response, sender = client.recvfrom(1024)
+            print('Received ACK from server')
+            recv_packet = Packet.from_bytes(response)
+            if (recv_packet.packet_type == 3 and recv_packet.seq_num == 3):
+                break
+        except socket.timeout:
+            print("Timeout occurred, resending...")
+            client.sendto(request_packet.to_bytes(), (router_url, router_port))
+            print("ACK packet sent to server")
 
 
 # print(get(False,None,"http://httpbin.org/get?course=networking&assignment=1")) # testing v
