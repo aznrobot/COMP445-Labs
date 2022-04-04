@@ -36,113 +36,142 @@ def get(v, h, o, url, in_port, router_url, router_port, counter=5, timeout=5, if
                 peer_port=port,
                 payload="Hi".encode())
 
-    try:
-        client.sendto(handshake.to_bytes(), (router_url, router_port))
-        print("SYN packet sent to server")
-        client.settimeout(timeout)
-        response, sender = client.recvfrom(1024)
-        recv_packet = Packet.from_bytes(response)
 
-        if (recv_packet.packet_type == 1):
+    client.sendto(handshake.to_bytes(), (router_url, router_port))
+    print("SYN packet sent to server")
+    while True:
+        try:
+            client.settimeout(timeout)
+            response, sender = client.recvfrom(1024)
+            recv_packet = Packet.from_bytes(response)
+            if (recv_packet.packet_type == 1 and recv_packet.seq_num == 1):
+                break
+        except socket.timeout:
+            print("Timeout occurred, resending...")
+            client.sendto(handshake.to_bytes(), (router_url, router_port))
+            print("SYN packet sent to server")
 
-            print("SYN-ACK received from server")
-            request = "GET " + tail
+    # response, sender = client.recvfrom(1024)
+    # recv_packet = Packet.from_bytes(response)
+    print("SYN-ACK received from server")
+    request = "GET " + tail
 
-            request += " HTTP/1.1\nhost: "
-            request += host + "\n"
-            request += "Connection: close \n"
-            if h != None:
-                for key, value in h.items():
-                    request += "Accept: " + value + "\n"
-                    request += key + ":" + value + "\n"
+    request += " HTTP/1.1\nhost: "
+    request += host + "\n"
+    request += "Connection: close \n"
+    if h != None:
+      for key, value in h.items():
+        request += "Accept: " + value + "\n"
+        request += key + ":" + value + "\n"
 
-            request += "\n"
+    request += "\n"
 
-            # Create packet here
-            request_packet = Packet(packet_type=2,
+    # Create request to server
+    request_packet = Packet(packet_type=2,
                             seq_num=2,
                             peer_ip_addr=dest_ip,
                             peer_port=port,
                             payload=request.encode())
-            try:
-                client.sendto(request_packet.to_bytes(), (router_url, router_port))
-                # Set a timeout
-                client.settimeout(timeout)
-                print('Waiting for a response')
+    client.sendto(request_packet.to_bytes(), (router_url, router_port))
+    print("Request packet sent to server")
+    while True:
+        try:
+            # Set a timeout
+            client.settimeout(timeout)
+            print('Waiting for a response')
+            # receive some data
+            response, sender = client.recvfrom(1024)
+            print('Received data packet from server')
+            recv_packet = Packet.from_bytes(response)
+            if (recv_packet.packet_type == 2 and recv_packet.seq_num == 2):
+                break
+            else:
+                print('Incorrect Packet received')
+        except socket.timeout:
+            print("Timeout occurred, resending...")
+            client.sendto(request_packet.to_bytes(), (router_url, router_port))
+            print("Request packet sent to server")
 
-                # receive some data
-                response, sender = client.recvfrom(1024)
-                print('Received data packet from server')
-                recv_packet = Packet.from_bytes(response)
-                http_response = recv_packet.payload.decode()
+    # response, sender = client.recvfrom(1024)
+    # recv_packet = Packet.from_bytes(response)
+    http_response = recv_packet.payload.decode()
 
-                # Check if the response is correct
-                http_check = http_response.split("\n", 1)[0]
-                http_status = http_check.split(" ")[1]
+    # Check if the response is correct
+    http_check = http_response.split("\n", 1)[0]
+    http_status = http_check.split(" ")[1]
 
-                if http_status != "200" and counter != 0:
-                    if v:
-                        print(http_response)
-                        vIndex = http_response.index('{')
-                        if o != None:
-                            output = open(o, "w")
-                            output.write(http_response[vIndex:])
-                            output.close()
-                    else:
-                        vIndex = http_response.index('{')
-                        if o != None:
-                            output = open(o, "w")
-                            output.write(http_response[vIndex:])
-                            output.close()
-                        print(http_response[vIndex:])
-
-                    answer = ""
-                    while True:
-                        answer = input(
-                            "\n Would you like to be redirected to http://httpbin.org? \n Please enter yes or no\n")
-                        if (answer.lower() != "yes") or (answer.lower() != "no"):
-                            break
-
-                    if answer.lower() == "no":
-                        return
-
-                    print(
-                        "- URL cannot be reached. HTTP response code: " + http_status + " redirecting to http://httpbin.org -\n")
-                    urlObj = urlparse(url)
-                    urlIndex = url.index(urlObj.netloc) + len(urlObj.netloc)
-                    rest = url[urlIndex:]
-                    newURL = "http://httpbin.org" + rest
-                    get(v, h, o, newURL, 80, router_url, router_port, counter - 1)
-
-                else:
-                    # display the response
-                    if v:
-                        vIndex = http_response.index('{')
-                        if o != None:
-                            output = open(o, "w")
-                            output.write(http_response[vIndex:])
-                            output.close()
-                        print(http_response)
-                    else:
-                        vIndex = http_response.index('{')
-                        if o != None:
-                            output = open(o, "w")
-                            output.write(http_response[vIndex:])
-                            output.close()
-                        print(http_response[vIndex:])
-
-            except socket.timeout:
-                if ifTimedOut:
-                    print('No response after {}s'.format(timeout))
-                else:
-                    get(v, h, o, url, in_port, router_url, router_port, counter=5, timeout=10, ifTimedOut=True)
+    if http_status != "200" and counter != 0:
+        if v:
+            print(http_response)
+            vIndex = http_response.index('{')
+            if o != None:
+                output = open(o, "w")
+                output.write(http_response[vIndex:])
+                output.close()
         else:
-            client.sendto(handshake.to_bytes(), (router_url, router_port))
+            vIndex = http_response.index('{')
+            if o != None:
+                output = open(o, "w")
+                output.write(http_response[vIndex:])
+                output.close()
+            print(http_response[vIndex:])
 
-    except socket.timeout:
-        client.sendto(handshake.to_bytes(), (router_url, router_port))
+        answer = ""
+        while True:
+            answer = input("\n Would you like to be redirected to http://httpbin.org? \n Please enter yes or no\n")
+            if (answer.lower() != "yes") or (answer.lower() != "no"):
+                break
 
+        if answer.lower() == "no":
+            return
 
+        print("- URL cannot be reached. HTTP response code: " + http_status + " redirecting to http://httpbin.org -\n")
+        urlObj = urlparse(url)
+        urlIndex = url.index(urlObj.netloc) + len(urlObj.netloc)
+        rest = url[urlIndex:]
+        newURL = "http://httpbin.org" + rest
+        get(v, h, o, newURL, 80, counter - 1)
+
+    else:
+        # display the response
+        if v:
+            vIndex = http_response.index('{')
+            if o != None:
+                output = open(o, "w")
+                output.write(http_response[vIndex:])
+                output.close()
+            print(http_response)
+        else:
+            vIndex = http_response.index('{')
+            if o != None:
+                output = open(o, "w")
+                output.write(http_response[vIndex:])
+                output.close()
+            print(http_response[vIndex:])
+
+    # # Create ACK to server
+    # ack_packet = Packet(packet_type=3,
+    #                         seq_num=3,
+    #                         peer_ip_addr=dest_ip,
+    #                         peer_port=port,
+    #                         payload="Got it!".encode())
+    # client.sendto(ack_packet.to_bytes(), (router_url, router_port))
+    # print("ACK packet sent to server")
+    # while True:
+    #     try:
+    #         # Set a timeout
+    #         client.settimeout(timeout)
+    #         print('Waiting for a response')
+    #         # receive some data
+    #         response, sender = client.recvfrom(1024)
+    #         print('Received ACK from server')
+    #         recv_packet = Packet.from_bytes(response)
+    #         if (recv_packet.packet_type == 3 and recv_packet.seq_num == 3):
+    #             break
+    #     except socket.timeout:
+    #         print("Timeout occurred, resending...")
+    #         client.sendto(request_packet.to_bytes(), (router_url, router_port))
+    #         print("ACK packet sent to server")
 
 
 # print(get(False,None,"http://httpbin.org/get?course=networking&assignment=1")) # testing v
@@ -177,86 +206,121 @@ def post(v, h, d, f, o, url, in_port, router_url, router_port, timeout=5, ifTime
                 peer_ip_addr=dest_ip,
                 peer_port=port,
                 payload="Hi".encode())
-    try:
-        client.sendto(handshake.to_bytes(), (router_url, router_port))
-        print("SYN packet sent to server")
-        client.settimeout(timeout)
-        response, sender = client.recvfrom(1024)
-        recv_packet = Packet.from_bytes(response)
 
-        if (recv_packet.packet_type == 1):
-            print("SYN-ACK received from server")
-            request = "POST " + tail
+    client.sendto(handshake.to_bytes(), (router_url, router_port))
+    print("SYN packet sent to server")
+    while True:
+        try:
+            client.settimeout(timeout)
+            response, sender = client.recvfrom(1024)
+            recv_packet = Packet.from_bytes(response)
+            if (recv_packet.packet_type == 1 and recv_packet.seq_num == 1):
+                break
+        except socket.timeout:
+            print("Timeout occurred, resending...")
+            client.sendto(handshake.to_bytes(), (router_url, router_port))
+            print("SYN packet sent to server")
 
-            request += " HTTP/1.1\nhost: "
-            request += host + "\n"
-            request += "Connection: close \n"
-            if h != None:
-                for key, value in h.items():
-                    request += "Accept: " + value + "\n"
-                    request += key + ":" + value + "\n"
 
-            if d != None:
-                content_len = len(str(d))
-                request += "Content-Length: " + str(content_len) + "\n"
-                request += "\n"
-                request += d + "\n"
+    print("SYN-ACK received from server")
+    request = "POST " + tail
 
-            if f != None:
-                try:
-                    with open(f, "r") as file:
-                        lines = file.readline()
-                except:
-                    print("File could not be opened")
-                    exit()
-                content_len = len(lines)
-                request += "Content-Length: " + str(content_len) + "\n"
-                request += "\n"
-                request += lines + "\n"
+    request += " HTTP/1.1\nhost: "
+    request += host + "\n"
+    request += "Connection: close \n"
+    if h != None:
+        for key, value in h.items():
+            request += "Accept: " + value + "\n"
+            request += key + ":" + value + "\n"
 
-            # Create packet here
-            request_packet = Packet(packet_type=2,
-                            seq_num=2,
+    if d != None:
+        content_len = len(str(d))
+        request += "Content-Length: " + str(content_len) + "\n"
+        request += "\n"
+        request += d + "\n"
+
+    if f != None:
+        try:
+            with open(f, "r") as file:
+                lines = file.readline()
+        except:
+            print("File could not be opened")
+            exit()
+        content_len = len(lines)
+        request += "Content-Length: " + str(content_len) + "\n"
+        request += "\n"
+        request += lines + "\n"
+
+    # Create request to server
+    request_packet = Packet(packet_type=2,
+                        seq_num=2,
+                        peer_ip_addr=dest_ip,
+                        peer_port=port,
+                        payload=request.encode())
+
+    client.sendto(request_packet.to_bytes(), (router_url, router_port))
+    print("Request packet sent to server")
+    while True:
+        try:
+            # Set a timeout
+            client.settimeout(timeout)
+            print('Waiting for a response')
+            # receive some data
+            response, sender = client.recvfrom(1024)
+            print('Received data packet from server')
+            recv_packet = Packet.from_bytes(response)
+            if (recv_packet.packet_type == 2 and recv_packet.seq_num == 2):
+                break
+            else:
+                print('Incorrect Packet received')
+        except socket.timeout:
+            print("Timeout occurred, resending...")
+            client.sendto(request_packet.to_bytes(), (router_url, router_port))
+            print("Request packet sent to server")
+
+    # Create ACK to server
+    ack_packet = Packet(packet_type=3,
+                            seq_num=3,
                             peer_ip_addr=dest_ip,
                             peer_port=port,
-                            payload=request.encode())
-            try:
-                client.sendto(request_packet.to_bytes(), (router_url, router_port))
+                            payload="Got it!".encode())
+    client.sendto(ack_packet.to_bytes(), (router_url, router_port))
+    print("ACK packet sent to server")
+    while True:
+        try:
+            # Set a timeout
+            client.settimeout(timeout)
+            print('Waiting for a response')
+            # receive some data
+            response, sender = client.recvfrom(1024)
+            print('Received ACK from server')
+            recv_packet = Packet.from_bytes(response)
+            if (recv_packet.packet_type == 3 and recv_packet.seq_num == 3):
+                break
+        except socket.timeout:
+            print("Timeout occurred, resending...")
+            client.sendto(request_packet.to_bytes(), (router_url, router_port))
+            print("ACK packet sent to server")
 
-                # Set a timeout
-                client.settimeout(timeout)
-                print('Waiting for a response')
-                # receive response
-                response, sender = client.recvfrom(1024)
-                print('Received data packet from server')
-                recv_packet = Packet.from_bytes(response)
-                http_response = recv_packet.payload.decode()
+    http_response = recv_packet.payload.decode()
+    # display the response
+    if v:
+        print(http_response)
+        vIndex = http_response.index('{')
+        if o != None:
+            output = open(o, "w")
+            output.write(http_response[vIndex:])
+            output.close()
+    else:
+        vIndex = http_response.index('{')
+        if o != None:
+            output = open(o, "w")
+            output.write(http_response[vIndex:])
+            output.close()
+        print(http_response[vIndex:])
 
-                # display the response
-                if v:
-                    print(http_response)
-                    vIndex = http_response.index('{')
-                    if o != None:
-                        output = open(o, "w")
-                        output.write(http_response[vIndex:])
-                        output.close()
-                else:
-                    vIndex = http_response.index('{')
-                    if o != None:
-                        output = open(o, "w")
-                        output.write(http_response[vIndex:])
-                        output.close()
-                    print(http_response[vIndex:])
 
-            except socket.timeout:
-                if ifTimedOut:
-                    print('No response after {}s'.format(timeout))
-                else:
-                    post(v, h, d, f, o, url, in_port, router_url, router_port, timeout=10, ifTimedOut=True)
-        else:
-            client.sendto(handshake.to_bytes(), (router_url, router_port))
-    except socket.timeout:
-        client.sendto(handshake.to_bytes(), (router_url, router_port))
+
 
 
 

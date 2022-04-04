@@ -30,19 +30,32 @@ def run_server(host, port, path, debug):
 def handle_client(listener, data, sender, path, debug):
     print ('New client from', sender)
     recv_packet = Packet.from_bytes(data)
+
+    # Send SYN-ACK to client
     if(recv_packet.packet_type == 0):
         syn_ack_packet = recv_packet
         syn_ack_packet.packet_type = 1
         listener.sendto(syn_ack_packet.to_bytes(), sender)
         print("Sent SYN-ACK to client %s %s" %  (syn_ack_packet.peer_ip_addr, syn_ack_packet.peer_port))
 
-    data, sender = listener.recvfrom(1024)
+    while True:
+        try:
+            listener.settimeout(5)
+            data, sender = listener.recvfrom(1024)
+            recv_packet = Packet.from_bytes(data)
+            if (recv_packet.packet_type == 2 and recv_packet.seq_num == 2):
+                break
+        except socket.timeout:
+            print("Timeout occurred, resending...")
+            listener.sendto(syn_ack_packet.to_bytes(), sender)
+            print("Sent SYN-ACK to client %s %s" %  (syn_ack_packet.peer_ip_addr, syn_ack_packet.peer_port))
 
+    # data, sender = listener.recvfrom(1024)
+    # recv_packet = Packet.from_bytes(data)
     file_directory = path
     try:
         while True:
             # Decode message
-            recv_packet = Packet.from_bytes(data)
             client_message = recv_packet.payload.decode()
             if len(client_message) < 1: #skip empty messages are received
                 break
@@ -109,13 +122,26 @@ def handle_client(listener, data, sender, path, debug):
             if debug:
                 print("Return message to client:\n")
                 print(sendback)
-
-            recv_packet.packet_type = 2
-            recv_packet.payload = sendback.encode()
-            listener.sendto(recv_packet.to_bytes(), sender)
             break
 
+        recv_packet.packet_type = 2
+        recv_packet.payload = sendback.encode()
+        listener.sendto(recv_packet.to_bytes(), sender)
         print("Sent response to client %s %s" % (recv_packet.peer_ip_addr, recv_packet.peer_port))
+        # while True:
+        #     try:
+        #         listener.settimeout(5)
+        #         data, sender = listener.recvfrom(1024)
+        #         recv_packet = Packet.from_bytes(data)
+        #         if (recv_packet.packet_type == 3 and recv_packet.seq_num == 3):
+        #             break
+        #     except socket.timeout:
+        #         print("Timeout occurred, resending...")
+        #         listener.sendto(recv_packet.to_bytes(), sender)
+        #         print("Sent response to client %s %s" % (recv_packet.peer_ip_addr, recv_packet.peer_port))
+        # print("ACK received from client")
+        # print("Sent ACK to client")
+        # listener.sendto(recv_packet.to_bytes(), sender)
     finally:
         print("Client serviced")
 
