@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 import ipaddress
 from packet import *
 
-def get(v, h, o, url, in_port, router_url, router_port, counter=5, timeout=5, ifTimedOut = False):
+def get(v, h, o, url, in_port, router_url, router_port, counter=5, timeout=2, ifTimedOut = False):
     if in_port == None:
         in_port = 80
     if router_port == None:
@@ -45,6 +45,7 @@ def get(v, h, o, url, in_port, router_url, router_port, counter=5, timeout=5, if
             response, sender = client.recvfrom(1024)
             recv_packet = Packet.from_bytes(response)
             if (recv_packet.packet_type == 1 and recv_packet.seq_num == 1):
+                client.settimeout(None)
                 break
         except socket.timeout:
             print("Timeout occurred, resending...")
@@ -84,6 +85,7 @@ def get(v, h, o, url, in_port, router_url, router_port, counter=5, timeout=5, if
             print('Received data packet from server')
             recv_packet = Packet.from_bytes(response)
             if (recv_packet.packet_type == 2 and recv_packet.seq_num == 2):
+                client.settimeout(None)
                 break
             else:
                 print('Incorrect Packet received')
@@ -167,6 +169,7 @@ def get(v, h, o, url, in_port, router_url, router_port, counter=5, timeout=5, if
             print('Received ACK from server')
             recv_packet = Packet.from_bytes(response)
             if (recv_packet.packet_type == 3 and recv_packet.seq_num == 3):
+                client.settimeout(None)
                 break
         except socket.timeout:
             print("Timeout occurred, resending...")
@@ -179,7 +182,7 @@ def get(v, h, o, url, in_port, router_url, router_port, counter=5, timeout=5, if
 # print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h
 #print(get(False,{'course': 'networking', 'assignment': '1'},"http://httpbin.org")) # testing h and v
 
-def post(v, h, d, f, o, url, in_port, router_url, router_port, timeout=5, ifTimedOut = False):
+def post(v, h, d, f, o, url, in_port, router_url, router_port, timeout=2, ifTimedOut = False):
 
     if in_port == None:
         in_port = 80
@@ -215,6 +218,7 @@ def post(v, h, d, f, o, url, in_port, router_url, router_port, timeout=5, ifTime
             response, sender = client.recvfrom(1024)
             recv_packet = Packet.from_bytes(response)
             if (recv_packet.packet_type == 1 and recv_packet.seq_num == 1):
+                client.settimeout(None)
                 break
         except socket.timeout:
             print("Timeout occurred, resending...")
@@ -270,6 +274,7 @@ def post(v, h, d, f, o, url, in_port, router_url, router_port, timeout=5, ifTime
             print('Received data packet from server')
             recv_packet = Packet.from_bytes(response)
             if (recv_packet.packet_type == 2 and recv_packet.seq_num == 2):
+                client.settimeout(None)
                 break
             else:
                 print('Incorrect Packet received')
@@ -277,6 +282,23 @@ def post(v, h, d, f, o, url, in_port, router_url, router_port, timeout=5, ifTime
             print("Timeout occurred, resending...")
             client.sendto(request_packet.to_bytes(), (router_url, router_port))
             print("Request packet sent to server")
+
+    http_response = recv_packet.payload.decode()
+    # display the response
+    if v:
+        print(http_response)
+        vIndex = http_response.index('{')
+        if o != None:
+            output = open(o, "w")
+            output.write(http_response[vIndex:])
+            output.close()
+    else:
+        vIndex = http_response.index('{')
+        if o != None:
+            output = open(o, "w")
+            output.write(http_response[vIndex:])
+            output.close()
+        print(http_response[vIndex:])
 
     # Create ACK to server
     ack_packet = Packet(packet_type=3,
@@ -296,30 +318,12 @@ def post(v, h, d, f, o, url, in_port, router_url, router_port, timeout=5, ifTime
             print('Received ACK from server')
             recv_packet = Packet.from_bytes(response)
             if (recv_packet.packet_type == 3 and recv_packet.seq_num == 3):
+                client.settimeout(None)
                 break
         except socket.timeout:
             print("Timeout occurred, resending...")
             client.sendto(request_packet.to_bytes(), (router_url, router_port))
             print("ACK packet sent to server")
-
-    http_response = recv_packet.payload.decode()
-    # display the response
-    if v:
-        print(http_response)
-        vIndex = http_response.index('{')
-        if o != None:
-            output = open(o, "w")
-            output.write(http_response[vIndex:])
-            output.close()
-    else:
-        vIndex = http_response.index('{')
-        if o != None:
-            output = open(o, "w")
-            output.write(http_response[vIndex:])
-            output.close()
-        print(http_response[vIndex:])
-
-
 
 
 
