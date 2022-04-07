@@ -64,6 +64,7 @@ def handle_client(listener, data, sender, path, debug):
             lines = client_message.split('\n')
             lines = [x for x in lines if x]
             command, url, httpVersion = lines[0].split(" ")
+            print(url)
             if command == "GET":
                 # Check file directory path
                 if url == "/":

@@ -1,5 +1,7 @@
 import argparse
+
 import methods
+from methods import *
 import ipaddress
 import packet
 
