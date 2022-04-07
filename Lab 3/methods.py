@@ -173,7 +173,7 @@ def get(v, h, o, url, in_port, router_url, router_port, counter=5, timeout=2, if
                 break
         except socket.timeout:
             print("Timeout occurred, resending...")
-            client.sendto(request_packet.to_bytes(), (router_url, router_port))
+            client.sendto(ack_packet.to_bytes(), (router_url, router_port))
             print("ACK packet sent to server")
 
 
@@ -322,7 +322,7 @@ def post(v, h, d, f, o, url, in_port, router_url, router_port, timeout=2, ifTime
                 break
         except socket.timeout:
             print("Timeout occurred, resending...")
-            client.sendto(request_packet.to_bytes(), (router_url, router_port))
+            client.sendto(ack_packet.to_bytes(), (router_url, router_port))
             print("ACK packet sent to server")
 
 
